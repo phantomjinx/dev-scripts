@@ -1,0 +1,19 @@
+#!/bin/bash
+
+###
+#
+# Kill any pods stuck in the Terminating condition
+#
+###
+
+PODS=$(oc get pods | grep Terminating | awk '{print $1}')
+if [ -z "${PODS}" ]; then
+  exit 0;
+fi
+
+for p in ${PODS}
+do
+  echo "Killing pod $p ..."
+  oc-kill "$p"
+done
+

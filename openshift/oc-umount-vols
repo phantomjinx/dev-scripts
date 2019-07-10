@@ -1,0 +1,16 @@
+#!/bin/bash
+
+###
+#
+# Unmount all volumes used by openshift
+#
+###
+
+VOLS=$(df -kh | grep openshift | awk '{print $6}')
+echo "$VOLS"
+if [ -z "$VOLS" ]; then
+  echo "No volumes to unmount. Try running with root?"
+  exit 1
+fi
+
+umount "$VOLS"

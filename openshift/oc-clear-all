@@ -1,0 +1,15 @@
+#!/bin/bash
+
+###
+#
+# Clear everything from the project
+# that has a given pattern, eg. oc-clear-all syn
+#
+###
+
+if [ -z "$1" ]; then
+  echo "$0 <pattern>"
+  exit 1
+fi
+
+oc get all | grep "$1" | awk {'print $1'} | uniq | xargs oc delete

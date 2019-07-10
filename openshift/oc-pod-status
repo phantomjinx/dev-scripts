@@ -1,0 +1,14 @@
+#!/bin/bash
+
+###
+#
+# Monitor pods over extended period
+#
+###
+
+while true;
+do
+  oc get pods;
+  sleep 8;
+  clear;
+done

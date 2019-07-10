@@ -1,0 +1,18 @@
+#!/bin/bash
+
+###
+#
+# Log in as system:admin and
+# promote the given user to cluster-admin
+#
+# If no user specified then assume developer
+#
+###
+
+USER="developer"
+if [ -n "$1" ]; then
+  USER="$1"
+fi
+
+oc login -u system:admin
+oc adm policy add-cluster-role-to-user cluster-admin "$USER"

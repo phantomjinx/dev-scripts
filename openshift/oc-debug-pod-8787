@@ -1,0 +1,15 @@
+#!/bin/bash
+
+###
+#
+# Port foward named pod on debug port 8787
+# Allows connection to eclipse for BE debugging
+#
+###
+
+if [ -z "$1" ]; then
+  echo "$0 <pod-name>"
+  exit 1
+fi
+
+oc port-forward "$1" 8787:8787

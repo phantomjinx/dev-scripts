@@ -1,0 +1,9 @@
+#!/bin/bash
+
+###
+#
+# Remove the syndesis project
+#
+###
+
+oc delete project syndesis

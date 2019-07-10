@@ -1,0 +1,36 @@
+#!/bin/bash
+
+###
+#
+# With no pattern specified, clear all pods with status Completed
+# With a pattern, clear all Running pods with pattern, except the latest one
+#
+###
+
+if [ -z "$1" ]; then
+  BUILDS=$(oc get pods | grep Completed | grep -E "\b-build" | awk '{print $1}')
+  for b in ${BUILDS}
+  do
+    echo "Cleaning up $b ..."
+    oc delete po/"$b"
+  done
+else
+  PREFIX="$1"
+  BUILDS=$(oc get pods | grep -v Running | grep $PREFIX | awk '{print $1}')
+  BUILDS=( "$BUILDS" )
+
+  # Do not delete last one
+  let limit=${#BUILDS[@]}-1
+
+  for index in "${!BUILDS[@]}"
+  do
+    if [ $index -eq $limit ]; then
+      break
+    fi
+
+    pod=${BUILDS[$index]}
+
+    oc delete po/"$pod"
+  done
+fi
+

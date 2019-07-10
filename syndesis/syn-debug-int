@@ -1,0 +1,51 @@
+#!/bin/bash
+
+###
+#
+# Find the given running integration based on it prefix name,
+# checks if it is in DEBUG mode, if not adds the requisite env var
+# & redeploys a new instance.
+#
+# Once ready, it connects to the integration on the debug port 5005
+# to allow the integration to be debugged in an IDE.
+#
+###
+
+
+if [ -z "$1" ]; then
+  echo "$0 <int-prefix-name>"
+  exit 1
+fi
+
+export INTEGRATION="$1"
+
+JO=`oc env dc/${INTEGRATION} --list | grep JAVA_OPTIONS`
+
+if [ -z "${JO}" ]; then
+  echo "No debug option in JAVA_OPTIONS so appending and rolling out new deployment..."
+  oc env dc/${INTEGRATION} JAVA_OPTIONS="$(oc env dc/${INTEGRATION} --list |  grep -P '(?<=JAVA_OPTIONS=)(.*)' -o --color=never) -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+
+  sleep 15
+
+  oc rollout latest dc/${INTEGRATION}
+
+  sleep 15
+else
+  echo "Debug option already present. Skipping redeployment."
+fi
+
+echo "Waiting for deployment then executing oc-debug-pod-5005"
+while true
+do
+  oc get pods | grep ${INTEGRATION} | grep -v deploy
+
+  oc get pods | grep ${INTEGRATION} | grep -v deploy | grep Running
+  ret=$?
+  if [ $ret == 0 ]; then
+    echo "${INTEGRATION} now up n running... debugging on 5005"
+
+    INTID=`oc get pods | grep ${INTEGRATION} | grep -v build | awk {'print $1'}`
+    echo "Trying to debug on 5005 ${INTID}..."
+    oc-debug-pod-5005 ${INTID}
+  fi
+done

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+###
+#
+# Delete a named pod
+#
+###
+
+if [ -z "$1" ]; then
+  echo "$0 <pod-name>"
+  exit 1
+fi
+
+oc delete po/"$1"

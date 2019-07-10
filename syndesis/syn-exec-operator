@@ -1,0 +1,25 @@
+#!/bin/bash
+
+###
+#
+# Execute the syndesis operator in isolation
+#
+# When developing the syndesis operator, the following scripts provide the build sequence:
+#
+# 1. syn-compile-op       -> Compile the operator to check for syntax errors
+# 2. syn-build-op            -> Build the operator and upload the new image
+# 3. syn-deploy-op         -> Deploy an instance of the operator
+# 4. syn-exec-op             -> Execute the operator to create a running syndesis
+#
+###
+
+syndesis=$(cat << EOT
+apiVersion: "syndesis.io/v1alpha1"
+kind: "Syndesis"
+metadata:
+  name: "app"
+spec:
+EOT
+)
+
+echo "${syndesis}" | cat | oc create -f -

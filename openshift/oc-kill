@@ -1,0 +1,14 @@
+#!/bin/bash
+
+###
+#
+# Kill a named pod dead
+#
+###
+
+if [ -z "$1" ]; then
+  echo "$0 <pod>"
+  exit 1
+fi
+
+oc delete po/"$1" --grace-period=0 --force

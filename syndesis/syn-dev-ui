@@ -1,0 +1,10 @@
+#!/bin/bash
+
+###
+#
+# Build, install & execute a local version of the syndesis UI
+# for debugging purposes.
+#
+###
+
+syndesis ui --install --build --serve --minishift

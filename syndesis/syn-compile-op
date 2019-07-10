@@ -1,0 +1,36 @@
+#!/bin/bash
+
+###
+#
+# Compile the syndesis operator locally using go
+#
+# NOTE. the GOPATH environment variable should be set if the operator project is
+#             not installed under the default
+#
+# When developing the syndesis operator, the following scripts provide the build sequence:
+#
+# 1. syn-compile-op       -> Compile the operator to check for syntax errors
+# 2. syn-build-op            -> Build the operator and upload the new image
+# 3. syn-deploy-op         -> Deploy an instance of the operator
+# 4. syn-exec-op             -> Execute the operator to create a running syndesis
+#
+###
+
+if [ -z "$GOPATH" ]; then
+  echo "To compile syndesis using go, the syndesis project should be located in the following location:"
+  echo "\$GOPATH/src/github.com/src/syndesisio/syndesis"
+  echo "The GOPATH env variable should be set according to conform to the location above"
+  exit 1
+fi
+
+cd $GOPATH/src/github.com/syndesisio/syndesis/install/operator
+
+source "./.lib.sh"
+
+OPERATOR_GO_PACKAGE="github.com/syndesisio/syndesis/install/operator"
+OPERATOR_BUILD_MODE="auto"
+
+echo "OPERATOR_BUILD_MODE = $OPERATOR_BUILD_MODE"
+echo "OPERATOR_GO_PACKAGE = $OPERATOR_GO_PACKAGE"
+
+build_operator $OPERATOR_BUILD_MODE $OPERATOR_GO_PACKAGE

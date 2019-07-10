@@ -1,0 +1,16 @@
+#!/bin/bash
+
+###
+#
+# Expose a syndesis integration as a webhook on port 8080
+#
+###
+
+INTEGRATION=$1
+if [ -z "$INTEGRATION" ]; then
+  echo "$0 <integration-pod-name>"
+  exit 1
+fi
+ 
+oc expose dc i-$INTEGRATION --port 8080
+oc expose service i-$INTEGRATION

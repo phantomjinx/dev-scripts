@@ -1,0 +1,10 @@
+#!/bin/bash
+
+###
+#
+# Remove & recreate the syndesis project
+# Requires oc-recreate-project script
+#
+###
+
+oc-recreate-project syndesis

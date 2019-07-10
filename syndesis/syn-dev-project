@@ -1,0 +1,21 @@
+#!/bin/bash
+
+###
+#
+# Install syndesis from local respository, performing
+# pre-requisites first
+#
+###
+
+oc-mk-admin
+
+syndesis install --setup
+
+syndesis install \
+ -p syndesis \
+ --dev \
+ --watch \
+ --local \
+ --force \
+ -y \
+ $@
