@@ -25,12 +25,14 @@ fi
 
 cd $GOPATH/src/github.com/syndesisio/syndesis/install/operator
 
+source "$(pwd)/../../tools/bin/commands/util/common_funcs"
+source "$(pwd)/../../tools/bin/commands/util/operator_funcs"
+source "$(pwd)/../../tools/bin/commands/util/openshift_funcs"
 source "./.lib.sh"
 
-OPERATOR_GO_PACKAGE="github.com/syndesisio/syndesis/install/operator"
 OPERATOR_BUILD_MODE="auto"
+OPERATOR_IMAGE_NAME="docker.io/syndesis/syndesis-operator:latest"
 
 echo "OPERATOR_BUILD_MODE = $OPERATOR_BUILD_MODE"
-echo "OPERATOR_GO_PACKAGE = $OPERATOR_GO_PACKAGE"
 
-build_operator $OPERATOR_BUILD_MODE $OPERATOR_GO_PACKAGE
+build_operator $OPERATOR_BUILD_MODE -ldflags "-X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorImage=$OPERATOR_IMAGE_NAME"

@@ -19,6 +19,7 @@ kind: "Syndesis"
 metadata:
   name: "app"
 spec:
+  devSupport: true
 EOT
 )
 
