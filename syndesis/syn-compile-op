@@ -32,7 +32,9 @@ source "./.lib.sh"
 
 OPERATOR_BUILD_MODE="auto"
 OPERATOR_IMAGE_NAME="docker.io/syndesis/syndesis-operator:latest"
+SOURCE_GEN="on"
 
 echo "OPERATOR_BUILD_MODE = $OPERATOR_BUILD_MODE"
 
-build_operator $OPERATOR_BUILD_MODE -ldflags "-X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorImage=$OPERATOR_IMAGE_NAME"
+build_operator $OPERATOR_BUILD_MODE "$SOURCE_GEN" \
+  -ldflags "-X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorImage=$OPERATOR_IMAGE_NAME -X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorTag=$OPERATOR_IMAGE_TAG"
