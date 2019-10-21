@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd ~/programming/go/src/github.com/syndesisio/syndesis/install/operator
+export GOPATH=~/programming/go
+
+source "./.lib.sh"
+
+OPERATOR_GO_PACKAGE="github.com/syndesisio/syndesis/install/operator"
+OPERATOR_BUILD_MODE="auto"
+
+echo "OPERATOR_BUILD_MODE = $OPERATOR_BUILD_MODE"
+echo "OPERATOR_GO_PACKAGE = $OPERATOR_GO_PACKAGE"
+
+build_operator $OPERATOR_BUILD_MODE $OPERATOR_GO_PACKAGE

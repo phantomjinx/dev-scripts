@@ -1,0 +1,3 @@
+#!/bin/bash
+
+oc get pods | grep build | grep -v running | awk {'print "po/"$1'} | xargs oc delete

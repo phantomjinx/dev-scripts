@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "$0 <pod>"
+  exit 1
+fi
+
+LOG="$1.log"
+
+while true;
+do
+  oc logs $1 >> $LOG
+  sleep 5
+done

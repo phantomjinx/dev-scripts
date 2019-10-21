@@ -1,0 +1,5 @@
+syn-s2i-app.sh \
+  --src-repo=https://github.com/phantomjinx/syndesis.git \
+  --src-branch=issue3098 \
+  --local \
+  -p syndesis

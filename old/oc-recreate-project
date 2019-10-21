@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "$0 <project-name>"
+  exit 1
+fi
+
+if oc get project | grep "$1"; then
+  oc delete project "$1"
+
+  while oc get project | grep "$1"
+  do
+    sleep 3
+  done
+
+  sleep 5
+fi
+
+oc new-project "$1"

@@ -1,0 +1,12 @@
+#!/bin/bash
+
+oc-admin
+
+syndesis install --setup
+
+syndesis install \
+ --watch \
+ --local \
+ --force \
+ -y \
+ $@

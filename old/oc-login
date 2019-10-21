@@ -1,0 +1,6 @@
+#!/bin/bash
+
+HOST=vision
+
+echo "Logging into ${HOST} ..."
+oc login https://${HOST}.birds-of-prey.phantomjinx.org.uk:8443 -u developer

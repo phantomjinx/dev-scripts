@@ -1,0 +1,13 @@
+#!/bin/bash
+
+PODS=`oc get pods | grep Error | awk '{print $1}'`
+if [ -z "${PODS}" ]; then
+  exit 0;
+fi
+
+for p in ${PODS}
+do
+  echo "Killing pod $p ..."
+  oc-kill $p
+done
+

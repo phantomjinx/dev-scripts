@@ -1,0 +1,3 @@
+#!/bin/bash
+
+syndesis ui --install --build --serve --minishift

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+SYNDESIS="$HOME/programming/java/syndesis"
+
+oc create -f $SYNDESIS/install/operator/deploy/syndesis-operator.yml

@@ -1,0 +1,58 @@
+#!/bin/bash
+
+ARGS=("$@")
+
+# Read the value of an option.
+readopt() {
+    filters="$@"
+
+    next=false
+    for var in "${ARGS[@]}"; do
+        if $next; then
+            echo $var
+            break;
+        fi
+
+        for filter in $filters; do
+            if [[ "$var" = ${filter}* ]]; then
+                local value="${var//${filter}=/}"
+                if [ "$value" != "$var" ]; then
+                    echo $value
+                    return
+                fi
+                next=true
+            fi
+        done
+    done
+}
+
+CONTENT_TYPE='"Content-Type: application/json"'
+
+type="GET"
+if [ -n "$(readopt --type)" ]; then
+  type="$(readopt --type)"
+fi
+
+token=`oc whoami -t`
+if [ -n "${token}" ]; then
+  token="Authorization: Bearer ${token}"
+fi
+
+url=$(readopt --url)
+if [ -z "${url}" ]; then
+  echo "--url <url> required."
+  exit 1
+fi
+
+echo "URL: ${url}"
+echo "TOKEN: ${token}"
+echo "TYPE: ${type}"
+echo -e "\n===\n"
+
+#echo "curl -vvv -X ${type} -H \"${token}\" ${url}"
+#curl -vvv -X ${type} -H "${token}" ${url}
+curl --cookie $(syndesis dev --cookie --refresh) ${url}
+
+
+#echo "curl -kI ${token} ${CONTENT_TYPE} -X GET https://peregrine.birds-of-prey.phantomjinx.org.uk:8443/${url}"
+#curl -k "${token}" "${CONTENT_TYPE}" -X GET https://peregrine.birds-of-prey.phantomjinx.org.uk:8443/${url}

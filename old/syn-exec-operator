@@ -1,0 +1,12 @@
+#!/bin/bash
+
+syndesis=$(cat << EOT
+apiVersion: "syndesis.io/v1alpha1"
+kind: "Syndesis"
+metadata:
+  name: "app"
+spec:
+EOT
+)
+
+echo "${syndesis}" | cat | oc create -f -

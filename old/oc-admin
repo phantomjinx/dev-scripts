@@ -1,0 +1,9 @@
+#!/bin/bash
+
+USER="developer"
+if [ ! -z "$1" ]; then
+  USER="$1"
+fi
+
+oc login -u system:admin
+oc adm policy add-cluster-role-to-user cluster-admin $USER

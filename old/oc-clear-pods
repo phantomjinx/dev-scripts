@@ -1,0 +1,16 @@
+#!/bin/bash
+
+TYPE="$1"
+if [ -z "$TYPE" ]; then
+  echo "$0 <pattern-of-builds-to-find>"
+  exit 1
+fi
+
+PODS=`oc get pods | grep ${TYPE} | awk {'print "po/"$1'}`
+if [ -z "$PODS" ]; then
+  echo "No pods found"
+  exit 1
+fi
+
+echo "Deleting pods ..."
+oc delete $PODS

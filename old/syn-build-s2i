@@ -1,0 +1,42 @@
+#!/bin/bash
+
+help() {
+  echo "$0 [-c]"
+  echo "    -c: recompile locally before building images"
+  exit 1
+}
+
+while getopts ":c" opt ; do
+
+ case "$opt" in
+    c) CLEAN=1 ;;
+    h) help
+       ;;
+    \\?) help
+   ;;
+  esac
+done
+
+shift `expr $OPTIND - 1`
+
+if [ "${CLEAN}" == "1" ]; then
+  syndesis build -f -c -b
+  ret_code=$?
+
+  if [ $ret_code > 0 ]; then
+    read -p "Build failure, wanna continue? " -n 1 -r
+    echo    # (optional) move to a new line
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+      exit 1
+    fi
+  fi
+
+  if [ -f "${ret_code}" ]; then
+    rm -f ${ret_code}
+  fi
+fi
+
+syndesis build \
+-c -f -i -m s2i \
+--maven-mirror http://${HOSTNAME}:8081/repository/maven-public
+

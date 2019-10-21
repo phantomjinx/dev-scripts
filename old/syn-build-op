@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo $(pwd)
+export GOPATH=~/programming/go
+syndesis build \
+  --local \
+  -m operator \
+  -f
