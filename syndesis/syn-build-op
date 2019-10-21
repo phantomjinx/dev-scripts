@@ -7,13 +7,24 @@
 # When developing the syndesis operator, the following scripts provide the build sequence:
 #
 # 1. syn-compile-op       -> Compile the operator to check for syntax errors
-# 2. syn-build-op            -> Build the operator and upload the new image
-# 3. syn-deploy-op         -> Deploy an instance of the operator
-# 4. syn-exec-op             -> Execute the operator to create a running syndesis
+# 2. syn-install-op            -> Install the operator and upload it
+# 3. syn-exec-op             -> Execute the operator to create a running syndesis
 #
 ###
 
-syndesis build \
-  --local \
-  -m operator \
-  -f
+if [ -z "$GOPATH" ]; then
+  echo "To compile syndesis using go, the syndesis project should be located in the following location:"
+  echo "\$GOPATH/src/github.com/src/syndesisio/syndesis"
+  echo "The GOPATH env variable should be set according to conform to the location above"
+  exit 1
+fi
+
+cd $GOPATH/src/github.com/syndesisio/syndesis/install/operator
+
+OPERATOR_BINARY=./dist/linux-amd64/syndesis-operator
+if [ ! -f "$OPERATOR_BINARY" ]; then
+  echo "Cannot find operator binary"
+  exit 1
+fi
+
+${OPERATOR_BINARY} install operator --dev

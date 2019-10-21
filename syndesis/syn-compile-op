@@ -10,9 +10,8 @@
 # When developing the syndesis operator, the following scripts provide the build sequence:
 #
 # 1. syn-compile-op       -> Compile the operator to check for syntax errors
-# 2. syn-build-op            -> Build the operator and upload the new image
-# 3. syn-deploy-op         -> Deploy an instance of the operator
-# 4. syn-exec-op             -> Execute the operator to create a running syndesis
+# 2. syn-install-op           -> Install the operator and upload it
+# 3. syn-exec-op             -> Execute the operator to create a running syndesis
 #
 ###
 
@@ -25,14 +24,24 @@ fi
 
 cd $GOPATH/src/github.com/syndesisio/syndesis/install/operator
 
+operators=$(find $GOPATH -name syndesis-operator)
+for op in ${operators}
+do
+  rm -rf ${op}
+done
+
 source "$(pwd)/../../tools/bin/commands/util/common_funcs"
 source "$(pwd)/../../tools/bin/commands/util/operator_funcs"
 source "$(pwd)/../../tools/bin/commands/util/openshift_funcs"
 source "./.lib.sh"
 
-OPERATOR_BUILD_MODE="auto"
-OPERATOR_IMAGE_NAME="docker.io/syndesis/syndesis-operator:latest"
-SOURCE_GEN="on"
+OPERATOR_IMAGE_NAME="$(readopt --image-name         docker.io/syndesis/syndesis-operator)"
+OPERATOR_IMAGE_TAG="$(readopt  --image-tag          latest)"
+S2I_STREAM_NAME="$(readopt     --s2i-stream-name    syndesis-operator)"
+OPERATOR_BUILD_MODE="$(readopt --operator-build     auto)"
+IMAGE_BUILD_MODE="$(readopt    --image-build        auto)"
+SOURCE_GEN="$(readopt          --source-gen         on)"
+GO_BUILD_OPTIONS="$(readopt    --go-options         '')"
 
 echo "OPERATOR_BUILD_MODE = $OPERATOR_BUILD_MODE"
 

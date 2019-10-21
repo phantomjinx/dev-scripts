@@ -14,5 +14,16 @@ if [ -n "$1" ]; then
   USER="$1"
 fi
 
-oc login -u system:admin
+test=$(oc version | grep "^oc" | tr -d oc\ v | cut -f1 -d "+")
+if [ "$test" = "" ]; then
+  test=$(oc version | grep 'Client Version' | sed "s/^.*GitVersion:\"v\(.*\)\", GitCommit.*$/\1/" | sed "s/Client Version: v//")
+fi
+
+echo $test
+if [[ "${test}" =~ ^4\..* ]]; then
+  oc login -u kubeadmin
+else
+  oc login -u system:admin
+fi
+
 oc adm policy add-cluster-role-to-user cluster-admin "$USER"

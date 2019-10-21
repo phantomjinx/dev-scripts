@@ -13,10 +13,14 @@ if [ -z "$TYPE" ]; then
 fi
 
 PODS=$(oc get pods | grep "${TYPE}" | awk {'print "po/"$1'})
+echo -e "Pods to be deleted:\n${PODS}"
 if [ -z "$PODS" ]; then
   echo "No pods found"
   exit 1
 fi
 
 echo "Deleting pods ..."
-oc delete "$PODS"
+for POD in ${PODS}
+do
+  oc delete "${POD}"
+done

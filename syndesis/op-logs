@@ -1,0 +1,5 @@
+#!/bin/bash
+
+operator=$(oc get pods | grep syndesis-operator | grep -v build | awk '{print $1}')
+
+oc logs po/${operator}
