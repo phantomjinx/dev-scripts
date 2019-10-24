@@ -27,4 +27,6 @@ if [ ! -f "$OPERATOR_BINARY" ]; then
   exit 1
 fi
 
-${OPERATOR_BINARY} install operator --dev
+${OPERATOR_BINARY} install cluster
+
+${OPERATOR_BINARY} install operator

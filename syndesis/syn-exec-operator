@@ -12,13 +12,22 @@
 #
 ###
 
+version=`oc version | grep -Eiv 'kubernetes|server' | grep -o '[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}\?'`
+echo "Using oc version $version"
+
+if [[ "$version" = 4.* ]]; then
+  DOMAIN="apps-crc.testing"
+else
+  DOMAIN="birds-of-prey.phantomjinx.org.uk"
+fi
+
 syndesis=$(cat << EOT
 apiVersion: "syndesis.io/v1alpha1"
 kind: "Syndesis"
 metadata:
   name: "app"
 spec:
-  routeHostname: syndesis-syndesis.birds-of-prey.phantomjinx.org.uk
+  routeHostname: syndesis-syndesis.${DOMAIN}
   devSupport: true
 EOT
 )
