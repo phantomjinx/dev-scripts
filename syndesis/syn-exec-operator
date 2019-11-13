@@ -18,8 +18,11 @@ echo "Using oc version $version"
 if [[ "$version" = 4.* ]]; then
   DOMAIN="apps-crc.testing"
 else
-  DOMAIN="birds-of-prey.phantomjinx.org.uk"
+  HOST=$(hostname)
+  DOMAIN=${HOST#*.*}
 fi
+
+echo "Using domain ... $DOMAIN"
 
 if [ -f "$1" ]; then
   syndesis=$(cat "$1")
