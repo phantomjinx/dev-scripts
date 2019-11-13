@@ -21,12 +21,52 @@ fi
 
 cd $GOPATH/src/github.com/syndesisio/syndesis/install/operator
 
+source "$(pwd)/../../tools/bin/commands/util/common_funcs"
+source "$(pwd)/../../tools/bin/commands/util/operator_funcs"
+source "$(pwd)/../../tools/bin/commands/util/openshift_funcs"
+source "./.lib.sh"
+
+OPERATOR_IMAGE_NAME="$(readopt --image-name         docker.io/syndesis/syndesis-operator)"
+OPERATOR_IMAGE_TAG="$(readopt  --image-tag          latest)"
+S2I_STREAM_NAME="$(readopt     --s2i-stream-name    syndesis-operator)"
+OPERATOR_BUILD_MODE="$(readopt --operator-build     auto)"
+IMAGE_BUILD_MODE="$(readopt    --image-build        auto)"
+SOURCE_GEN="$(readopt          --source-gen         on)"
+GO_BUILD_OPTIONS="$(readopt    --go-options         '')"
+
 OPERATOR_BINARY=./dist/linux-amd64/syndesis-operator
 if [ ! -f "$OPERATOR_BINARY" ]; then
   echo "Cannot find operator binary"
   exit 1
 fi
 
-${OPERATOR_BINARY} install cluster
+myuser=$(oc whoami)
 
-${OPERATOR_BINARY} install operator
+oc-login-admin
+oc get clusterrolebindings > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo "Not successfully logged in as cluster-admin ... exiting"
+  exit 1
+fi
+
+#
+# Executed as cluster-admin
+#
+${OPERATOR_BINARY} install cluster
+${OPERATOR_BINARY} grant --user ${myuser}
+
+oc-login
+if [ "$(oc whoami)" != "${myuser}" ]; then
+  echo "Logged in as alternative user to that which has been granted syndesis permissions"
+  exit 1
+fi
+
+#
+# Only installs the image stream configuration
+#
+${OPERATOR_BINARY} install operator --dev
+
+#
+# Actually builds and upload the image
+#
+build_image $IMAGE_BUILD_MODE $OPERATOR_IMAGE_NAME $OPERATOR_IMAGE_TAG $S2I_STREAM_NAME

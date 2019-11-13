@@ -21,7 +21,10 @@ else
   DOMAIN="birds-of-prey.phantomjinx.org.uk"
 fi
 
-syndesis=$(cat << EOT
+if [ -f "$1" ]; then
+  syndesis=$(cat "$1")
+else
+  syndesis=$(cat << EOT
 apiVersion: "syndesis.io/v1alpha1"
 kind: "Syndesis"
 metadata:
@@ -31,5 +34,6 @@ spec:
   devSupport: true
 EOT
 )
+fi
 
 echo "${syndesis}" | cat | oc create -f -
