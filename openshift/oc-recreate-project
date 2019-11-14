@@ -23,4 +23,15 @@ if oc get project | grep "$1"; then
   sleep 5
 fi
 
-oc new-project "$1"
+sleep 5
+
+PROJECT=0
+while [ $PROJECT == 0 ];
+do
+  oc new-project "$1"
+  if [ $? -eq 0 ]; then
+    PROJECT=1
+  fi
+
+  sleep 3
+done

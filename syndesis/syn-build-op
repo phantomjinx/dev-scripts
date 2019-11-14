@@ -12,6 +12,27 @@
 #
 ###
 
+while getopts dt option
+do
+  case "${option}"
+  in
+    d) DEVSUPPORT=1;;
+    t) TESTSUPPORT=1;;
+  esac
+done
+
+version=`oc version | grep -Eiv 'kubernetes|server' | grep -o '[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}\?'`
+echo "Using oc version $version"
+
+if [[ "$version" = 4.* ]]; then
+  DOMAIN="apps-crc.testing"
+else
+  HOST=$(hostname)
+  DOMAIN=${HOST#*.*}
+fi
+
+echo "Using domain ... $DOMAIN"
+
 if [ -z "$GOPATH" ]; then
   echo "To compile syndesis using go, the syndesis project should be located in the following location:"
   echo "\$GOPATH/src/github.com/src/syndesisio/syndesis"
@@ -29,7 +50,7 @@ source "./.lib.sh"
 OPERATOR_IMAGE_NAME="$(readopt --image-name         docker.io/syndesis/syndesis-operator)"
 OPERATOR_IMAGE_TAG="$(readopt  --image-tag          latest)"
 S2I_STREAM_NAME="$(readopt     --s2i-stream-name    syndesis-operator)"
-OPERATOR_BUILD_MODE="$(readopt --operator-build     auto)"
+OPERATOR_BUILD_MODE="$(readopt --operator-build     go)"
 IMAGE_BUILD_MODE="$(readopt    --image-build        auto)"
 SOURCE_GEN="$(readopt          --source-gen         on)"
 GO_BUILD_OPTIONS="$(readopt    --go-options         '')"
@@ -64,9 +85,33 @@ fi
 #
 # Only installs the image stream configuration
 #
-${OPERATOR_BINARY} install operator --dev
+${OPERATOR_BINARY} install operator
+
+sleep 3
+
+while true;
+do
+  echo "Waiting for syndesis-operator config ..."
+  oc get dc/syndesis-operator
+  if [ $? -eq 0 ]; then
+    break
+  fi
+done
+
+if [ -n "$DEVSUPPORT" ]; then
+  oc set env dc/syndesis-operator DEV_SUPPORT=true
+fi
+
+if [ -n "$TESTSUPPORT" ]; then
+  oc set env dc/syndesis-operator TEST_SUPPORT=true
+fi
 
 #
-# Actually builds and upload the image
+# Update the route hostname
+#
+oc set env dc/syndesis-operator ROUTE_HOSTNAME=${DOMAIN}
+
+#
+# Actually builds and upload the operator image
 #
 build_image $IMAGE_BUILD_MODE $OPERATOR_IMAGE_NAME $OPERATOR_IMAGE_TAG $S2I_STREAM_NAME

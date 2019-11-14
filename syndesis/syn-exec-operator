@@ -12,31 +12,13 @@
 #
 ###
 
-version=`oc version | grep -Eiv 'kubernetes|server' | grep -o '[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}\?'`
-echo "Using oc version $version"
+cd $GOPATH/src/github.com/syndesisio/syndesis/install/operator
 
-if [[ "$version" = 4.* ]]; then
-  DOMAIN="apps-crc.testing"
-else
-  HOST=$(hostname)
-  DOMAIN=${HOST#*.*}
+OPERATOR_BINARY=./dist/linux-amd64/syndesis-operator
+if [ ! -f "$OPERATOR_BINARY" ]; then
+  echo "Cannot find operator binary"
+  exit 1
 fi
 
-echo "Using domain ... $DOMAIN"
+${OPERATOR_BINARY} install app
 
-if [ -f "$1" ]; then
-  syndesis=$(cat "$1")
-else
-  syndesis=$(cat << EOT
-apiVersion: "syndesis.io/v1alpha1"
-kind: "Syndesis"
-metadata:
-  name: "app"
-spec:
-  routeHostname: syndesis-syndesis.${DOMAIN}
-  devSupport: true
-EOT
-)
-fi
-
-echo "${syndesis}" | cat | oc create -f -
