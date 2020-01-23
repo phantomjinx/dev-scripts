@@ -19,11 +19,11 @@ fi
 
 export INTEGRATION="$1"
 
-JO=`oc env dc/${INTEGRATION} --list | grep JAVA_OPTIONS`
+JO=`oc set env dc/${INTEGRATION} --list | grep JAVA_OPTIONS`
 
 if [ -z "${JO}" ]; then
   echo "No debug option in JAVA_OPTIONS so appending and rolling out new deployment..."
-  oc env dc/${INTEGRATION} JAVA_OPTIONS="$(oc env dc/${INTEGRATION} --list |  grep -P '(?<=JAVA_OPTIONS=)(.*)' -o --color=never) -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+  oc set env dc/${INTEGRATION} JAVA_OPTIONS="$(oc set env dc/${INTEGRATION} --list |  grep -P '(?<=JAVA_OPTIONS=)(.*)' -o --color=never) -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
 
   sleep 15
 

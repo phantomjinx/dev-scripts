@@ -7,4 +7,11 @@
 #
 ###
 
+oc-login-admin
+oc delete crd/jaegers.jaegertracing.io crd/syndesises.syndesis.io
+oc delete clusterrolebinding syndesis-jaeger-operator
+oc delete clusterrolebinding syndesis-jaeger-developer
+oc delete clusterrole jaeger-operator
+
+oc-login
 oc-recreate-project syndesis

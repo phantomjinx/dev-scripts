@@ -46,4 +46,4 @@ GO_BUILD_OPTIONS="$(readopt    --go-options         '')"
 echo "OPERATOR_BUILD_MODE = $OPERATOR_BUILD_MODE"
 
 build_operator $OPERATOR_BUILD_MODE "$SOURCE_GEN" \
-  -ldflags "-X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorImage=$OPERATOR_IMAGE_NAME -X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorTag=$OPERATOR_IMAGE_TAG"
+  -ldflags "-X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorImage=$OPERATOR_IMAGE_NAME -X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorTag=$OPERATOR_IMAGE_TAG" $GO_BUILD_OPTIONS

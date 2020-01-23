@@ -12,6 +12,28 @@
 #
 ###
 
+while getopts a:c:e option
+do
+  case "${option}"
+  in
+    a) ADDONS=$OPTARG
+    ;;
+    c) CR=$OPTARG
+    ;;
+    e) EJECT=1
+    ;;
+    :)
+      echo "Invalid option: $OPTARG requires an argument" 1>&2
+      exit 1
+      ;;
+    \?)
+      echo "Invalid Option: -$OPTARG" 1>&2
+      exit 1
+      ;;
+  esac
+done
+shift $((OPTIND -1))
+
 cd $GOPATH/src/github.com/syndesisio/syndesis/install/operator
 
 OPERATOR_BINARY=./dist/linux-amd64/syndesis-operator
@@ -20,5 +42,26 @@ if [ ! -f "$OPERATOR_BINARY" ]; then
   exit 1
 fi
 
-${OPERATOR_BINARY} install app
+OPTIONS="app"
+if [ -n "$ADDONS" ]; then
+  echo "Executing with addons $ADDONS"
+  OPTIONS="$OPTIONS --addons $ADDONS"
+fi
+
+if [ -n "$CR" ]; then
+  echo "Executing with custom CR from $CR"
+  if [ ! -f "$CR" ]; then
+    echo "Custom resource does not exist ... exiting"
+    exit 1
+  fi
+
+  OPTIONS="$OPTIONS --custom-resource $CR"
+fi
+
+if [ -n "$EJECT" ]; then
+  echo "Executing with eject ..."
+  OPTIONS="$OPTIONS -e yaml"
+fi
+
+${OPERATOR_BINARY} install ${OPTIONS}
 
