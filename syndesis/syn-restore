@@ -1,0 +1,26 @@
+#!/bin/bash
+
+###
+#
+# Restore a syndesis project
+#
+###
+if [ -z "$1" ]; then
+  echo "$0 <backup tar file>"
+  exit 1
+fi
+
+if [ -z "$GOPATH" ]; then
+  echo "Cannot find GOPATH so cannot ascertain syndesis install directory"
+  exit 1
+fi
+
+cd $GOPATH/src/github.com/syndesisio/syndesis/install/operator
+
+oc-login
+
+# Execute backup
+./dist/linux-amd64/syndesis-operator restore \
+ -n syndesis \
+ --backup "$1" \
+ --operator-config build/conf/config.yaml

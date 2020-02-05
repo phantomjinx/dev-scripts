@@ -1,0 +1,21 @@
+#!/bin/bash
+
+###
+#
+# Backup a syndesis project
+#
+###
+if [ -z "$GOPATH" ]; then
+  echo "Cannot find GOPATH so cannot ascertain syndesis install directory"
+  exit 1
+fi
+
+cd $GOPATH/src/github.com/syndesisio/syndesis/install/operator
+
+oc-login
+
+# Execute backup
+./dist/linux-amd64/syndesis-operator backup \
+ -n syndesis \
+ --backup /tmp/backupDir \
+ --operator-config build/conf/config.yaml

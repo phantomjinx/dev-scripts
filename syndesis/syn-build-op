@@ -25,6 +25,9 @@ done
 
 version=`oc version | grep -Eiv 'kubernetes|server' | grep -o '[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}\?'`
 echo "Using oc version $version"
+if [ -z "$version" ]; then
+  version="4.2"
+fi
 
 if [[ "$version" = 4.* ]]; then
   DOMAIN="apps-crc.testing"

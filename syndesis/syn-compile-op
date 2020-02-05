@@ -15,6 +15,14 @@
 #
 ###
 
+while getopts s option
+do
+  case "${option}"
+  in
+    s) SRCGENSKIP=1;;
+  esac
+done
+
 if [ -z "$GOPATH" ]; then
   echo "To compile syndesis using go, the syndesis project should be located in the following location:"
   echo "\$GOPATH/src/github.com/src/syndesisio/syndesis"
@@ -42,6 +50,10 @@ OPERATOR_BUILD_MODE="$(readopt --operator-build     auto)"
 IMAGE_BUILD_MODE="$(readopt    --image-build        auto)"
 SOURCE_GEN="$(readopt          --source-gen         on)"
 GO_BUILD_OPTIONS="$(readopt    --go-options         '')"
+
+if [ "$SRCGENSKIP" == "1" ]; then
+  SOURCE_GEN="off"
+fi
 
 echo "OPERATOR_BUILD_MODE = $OPERATOR_BUILD_MODE"
 
