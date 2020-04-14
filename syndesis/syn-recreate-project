@@ -8,10 +8,13 @@
 ###
 
 oc-login-admin
-oc delete crd/jaegers.jaegertracing.io crd/syndesises.syndesis.io
-oc delete clusterrolebinding syndesis-jaeger-operator
-oc delete clusterrolebinding syndesis-jaeger-developer
-oc delete clusterrole jaeger-operator
+oc delete crd/jaegers.jaegertracing.io crd/syndesises.syndesis.io crd/camel-k:edit
+
+crbs=$(oc get clusterrolebindings | grep 'syndesis\|camel\|jaeger' | awk '{print $1}')
+for crb in $crbs
+do
+  oc delete clusterrolebinding $crb
+done
 
 oc-login
 oc-recreate-project syndesis

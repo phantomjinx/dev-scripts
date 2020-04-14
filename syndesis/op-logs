@@ -1,5 +1,7 @@
 #!/bin/bash
 
-operator=$(oc get pods | grep syndesis-operator | grep -v build | awk '{print $1}')
+KUBE="oc"
 
-oc logs po/${operator}
+operator=$(${KUBE} get pods | grep syndesis-operator | grep -v build | awk '{print $1}')
+
+${KUBE} logs po/${operator}

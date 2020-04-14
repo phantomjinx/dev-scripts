@@ -4,7 +4,7 @@ for i in $(seq -f "%04g" 1 100)
 do
   pv="pv$i"
 
-  oc get pv/$pv | grep Failure
+  oc get pv/$pv | grep Fail
   if [ "$?" == "1" ]; then
     echo "$pv has not failed ... skipping"
     continue # pv is fine

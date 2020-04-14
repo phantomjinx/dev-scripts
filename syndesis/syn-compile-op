@@ -50,6 +50,7 @@ OPERATOR_BUILD_MODE="$(readopt --operator-build     auto)"
 IMAGE_BUILD_MODE="$(readopt    --image-build        auto)"
 SOURCE_GEN="$(readopt          --source-gen         on)"
 GO_BUILD_OPTIONS="$(readopt    --go-options         '')"
+GO_PROXY_URL="$(readopt        --go-proxy           https://proxy.golang.org)"
 
 if [ "$SRCGENSKIP" == "1" ]; then
   SOURCE_GEN="off"
@@ -57,5 +58,12 @@ fi
 
 echo "OPERATOR_BUILD_MODE = $OPERATOR_BUILD_MODE"
 
-build_operator $OPERATOR_BUILD_MODE "$SOURCE_GEN" \
-  -ldflags "-X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorImage=$OPERATOR_IMAGE_NAME -X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorTag=$OPERATOR_IMAGE_TAG" $GO_BUILD_OPTIONS
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [[ $branch == *1.9* ]]; then
+  echo "Neutralising GO_PROXY_URL"
+  build_operator $OPERATOR_BUILD_MODE "$SOURCE_GEN" \
+    -ldflags "-X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorImage=${OPERATOR_IMAGE_NAME} -X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorTag=${OPERATOR_IMAGE_TAG}" ${GO_BUILD_OPTIONS}
+else
+  build_operator $OPERATOR_BUILD_MODE "$SOURCE_GEN" "$GO_PROXY_URL" \
+    -ldflags "-X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorImage=${OPERATOR_IMAGE_NAME} -X github.com/syndesisio/syndesis/install/operator/pkg.DefaultOperatorTag=${OPERATOR_IMAGE_TAG}" ${GO_BUILD_OPTIONS}
+fi
