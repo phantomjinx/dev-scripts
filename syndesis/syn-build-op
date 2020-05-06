@@ -7,36 +7,33 @@
 # When developing the syndesis operator, the following scripts provide the build sequence:
 #
 # 1. syn-compile-op       -> Compile the operator to check for syntax errors
-# 2. syn-install-op            -> Install the operator and upload it
+# 2. syn-build-op            -> Install the operator and upload it
 # 3. syn-exec-op             -> Execute the operator to create a running syndesis
 #
 ###
 
-while getopts dts:v: option
-do
-  case "${option}"
-  in
-    d) DEVSUPPORT=1;;
-    t) TESTSUPPORT=1;;
-    s) STORAGE_CLASS=$OPTARG;;
-    v) VOLUME_NAME=$OPTARG;;
-  esac
-done
+ARGS=("$@")
+KUBECTL="oc"
+OP_NAME="syndesis-operator"
 
-version=`oc version | grep -Eiv 'kubernetes|server' | grep -o '[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}\?'`
-echo "Using oc version $version"
-if [ -z "$version" ]; then
-  version="4.2"
+echo "Using kube command: ${KUBECTL}"
+
+if [ $KUBECTL == "oc" ]; then
+  version=`oc version | grep -Eiv 'kubernetes|server' | grep -o '[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}\?'`
+  echo "Using oc version $version"
+  if [ -z "$version" ]; then
+    version="4.2"
+  fi
+
+  if [[ "$version" = 4.* ]]; then
+    DOMAIN="apps-crc.testing"
+  else
+    HOST=$(hostname)
+    DOMAIN=${HOST#*.*}
+  fi
+
+  echo "Using domain ... $DOMAIN"
 fi
-
-if [[ "$version" = 4.* ]]; then
-  DOMAIN="apps-crc.testing"
-else
-  HOST=$(hostname)
-  DOMAIN=${HOST#*.*}
-fi
-
-echo "Using domain ... $DOMAIN"
 
 if [ -z "$GOPATH" ]; then
   echo "To compile syndesis using go, the syndesis project should be located in the following location:"
@@ -45,13 +42,20 @@ if [ -z "$GOPATH" ]; then
   exit 1
 fi
 
-cd $GOPATH/src/github.com/syndesisio/syndesis/install/operator
+OP_DIR="$GOPATH/src/github.com/syndesisio/syndesis/install/operator"
+pushd $OP_DIR > /dev/null
 
 source "$(pwd)/../../tools/bin/commands/util/common_funcs"
 source "$(pwd)/../../tools/bin/commands/util/operator_funcs"
 source "$(pwd)/../../tools/bin/commands/util/openshift_funcs"
 source "./.lib.sh"
 
+popd >/dev/null
+
+DEVSUPPORT="$(hasflag -d)"
+TESTSUPPORT="$(hasflag -t)"
+STORAGE_CLASS="$(readopt -s         '')"
+VOLUME_NAME="$(readopt -v          '')"
 OPERATOR_IMAGE_NAME="$(readopt --image-name         docker.io/syndesis/syndesis-operator)"
 OPERATOR_IMAGE_TAG="$(readopt  --image-tag          latest)"
 S2I_STREAM_NAME="$(readopt     --s2i-stream-name    syndesis-operator)"
@@ -60,16 +64,38 @@ IMAGE_BUILD_MODE="$(readopt    --image-build        auto)"
 SOURCE_GEN="$(readopt          --source-gen         on)"
 GO_BUILD_OPTIONS="$(readopt    --go-options         '')"
 
-OPERATOR_BINARY=./dist/linux-amd64/syndesis-operator
+echo "DEVSUPPORT = $DEVSUPPORT"
+echo "OPERATOR_IMAGE_NAME = $OPERATOR_IMAGE_NAME"
+echo "OPERATOR_IMAGE_TAG = $OPERATOR_IMAGE_TAG"
+echo "OPERATOR_BUILD_MODE = $OPERATOR_BUILD_MODE"
+echo "SOURCE_GEN = $SOURCE_GEN"
+
+OPERATOR_BINARY=${OP_DIR}/dist/linux-amd64/${OP_NAME}
 if [ ! -f "$OPERATOR_BINARY" ]; then
   echo "Cannot find operator binary"
   exit 1
 fi
 
-myuser=$(oc whoami)
+if [ $KUBECTL == "oc" ]; then
+  #
+  # Actually builds and upload the operator image
+  #
+  pushd $OP_DIR > /dev/null
+  build_image $IMAGE_BUILD_MODE $OPERATOR_IMAGE_NAME $OPERATOR_IMAGE_TAG $S2I_STREAM_NAME
+  popd >/dev/null
+fi
 
-oc-login-admin
-oc get clusterrolebindings > /dev/null 2>&1
+myuser=$(oc whoami)
+echo "Current user: ${myuser}"
+
+# Change to admin user
+if [ $KUBECTL == "oc" ]; then
+  oc-login-admin
+else
+  kube-user -u $(kube-user -a) -n syndesis
+fi
+
+$KUBECTL get clusterrolebindings > /dev/null 2>&1
 if [ $? -ne 0 ]; then
   echo "Not successfully logged in as cluster-admin ... exiting"
   exit 1
@@ -81,54 +107,89 @@ fi
 ${OPERATOR_BINARY} install cluster
 ${OPERATOR_BINARY} grant --user ${myuser}
 
-oc-login
-if [ "$(oc whoami)" != "${myuser}" ]; then
+if [ $KUBECTL == "oc" ]; then
+  oc-login
+  myuser2=$(oc whoami)
+else
+  kube-user -u ${myuser} -n syndesis
+  myuser2=$(kube-user)
+fi
+
+if [ "${myuser2}" != "${myuser}" ]; then
   echo "Logged in as alternative user to that which has been granted syndesis permissions"
   exit 1
+fi
+
+${KUBECTL} get deployment/${OP_NAME} > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+  #
+  # Remove existing operator deployment
+  #
+  kubectl delete deployment/${OP_NAME} 2>&1
+  while true;
+  do
+    echo "Waiting for ${OP_NAME} config to be removed ..."
+    kubectl get deployment/${OP_NAME} 2>&1
+    if [ $? -ne 0 ]; then
+      break
+    fi
+  done
 fi
 
 #
 # Only installs the image stream configuration
 #
-${OPERATOR_BINARY} install operator
+
+INSTALL_OPTIONS="--tag ${OPERATOR_IMAGE_TAG} --image ${OPERATOR_IMAGE_NAME}"
+if [ $DEVSUPPORT ]; then
+  echo "Installing operator with dev support"
+  INSTALL_OPTIONS="${INSTALL_OPTIONS} --dev"
+fi
+
+${OPERATOR_BINARY} install operator ${INSTALL_OPTIONS}
 
 sleep 3
 
+TYPE_OF_DEP="deployment"
 while true;
 do
   echo "Waiting for syndesis-operator config ..."
-  oc get dc/syndesis-operator
+  ${KUBECTL} get dc/${OP_NAME} > /dev/null 2>&1
   if [ $? -eq 0 ]; then
+    TYPE_OF_DEP="dc"
+    break
+  fi
+
+  ${KUBECTL} get deployment/${OP_NAME} > /dev/null 2>&1
+  if [ $? -eq 0 ]; then
+    TYPE_OF_DEP="deployment"
     break
   fi
 done
 
-if [ -n "$DEVSUPPORT" ]; then
+if [ $DEVSUPPORT ]; then
   echo "Turning on dev support"
-  oc set env dc/syndesis-operator DEV_SUPPORT=true
+  ${KUBECTL} set env ${TYPE_OF_DEP}/${OP_NAME} DEV_SUPPORT=true > /dev/null 2>&1
 fi
 
-if [ -n "$TESTSUPPORT" ]; then
+if [ $TESTSUPPORT ]; then
   echo "Turning on test-support"
-  oc set env dc/syndesis-operator TEST_SUPPORT=true
+  ${KUBECTL} set env ${TYPE_OF_DEP}/${OP_NAME} TEST_SUPPORT=true > /dev/null 2>&1
 fi
 
 if [ -n "$VOLUME_NAME" ]; then
   echo "Setting db volume name to $VOLUME_NAME"
-  oc set env dc/syndesis-operator DATABASE_VOLUME_NAME="$VOLUME_NAME"
+  ${KUBECTL} set env ${TYPE_OF_DEP}/${OP_NAME} DATABASE_VOLUME_NAME="$VOLUME_NAME" > /dev/null 2>&1
 fi
 
 if [ -n "$STORAGE_CLASS" ]; then
   echo "Setting db storage class to $STORAGE_CLASS"
-  oc set env dc/syndesis-operator DATABASE_STORAGE_CLASS="$STORAGE_CLASS"
+  ${KUBECTL} set env ${TYPE_OF_DEP}/${OP_NAME} DATABASE_STORAGE_CLASS="$STORAGE_CLASS" > /dev/null 2>&1
 fi
 
-#
-# Update the route hostname
-#
-oc set env dc/syndesis-operator ROUTE_HOSTNAME="syndesis-syndesis.${DOMAIN}"
-
-#
-# Actually builds and upload the operator image
-#
-build_image $IMAGE_BUILD_MODE $OPERATOR_IMAGE_NAME $OPERATOR_IMAGE_TAG $S2I_STREAM_NAME
+if [ $KUBECTL == "oc" ]; then
+  #
+  # Update the route hostname
+  #
+  oc set env ${TYPE_OF_DEP}/${OP_NAME} ROUTE_HOSTNAME="syndesis-syndesis.${DOMAIN}"
+fi
